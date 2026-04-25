@@ -12,7 +12,6 @@ FEEDS = [
  "https://hackaday.com/feed/"
 ]
 
-# Expanded keywords for trends + authority
 KEYWORDS = [
  "embedded","firmware","rtos","driver","kernel","linux",
  "tinyml","machine learning","ai","edge ai",
@@ -34,17 +33,23 @@ def get_article_text(url):
         a.download()
         a.parse()
         return a.text[:2000]
-    except:
+    except Exception as e:
+        print(f"Error fetching article: {e}")
         return ""
 
 items = []
-for url in FEEDS:
-    d = feedparser.parse(url)
-    for e in d.entries:
-        s = score(e.title)
-        if s > 0:
-            text = get_article_text(e.link)
-            items.append((s, e.title, e.link, text))
+
+try:
+    for url in FEEDS:
+        d = feedparser.parse(url)
+        print(f"Fetched {len(d.entries)} items from {url}")
+        for e in d.entries:
+            s = score(e.title)
+            if s > 0:
+                text = get_article_text(e.link)
+                items.append((s, e.title, e.link, text))
+except Exception as e:
+    print("Pipeline error:", e)
 
 items = sorted(items, reverse=True)[:20]
 
@@ -56,10 +61,14 @@ fname = f"{folder}/{today}.md"
 
 with open(fname, "w") as f:
     f.write(f"# Research Feed — {today}\n\n")
-    for s, title, link, text in items:
-        f.write(f"## {title}\n")
-        f.write(f"{link}\n\n")
-        if text:
-            f.write(f"{text}\n\n---\n\n")
+
+    if not items:
+        f.write("No high-signal items found today.\n")
+    else:
+        for s, title, link, text in items:
+            f.write(f"## {title}\n")
+            f.write(f"{link}\n\n")
+            if text:
+                f.write(f"{text[:500]}\n\n---\n\n")
 
 print(f"Saved {fname}")
