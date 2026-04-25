@@ -1,0 +1,32 @@
+name: Daily Research
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install deps
+        run: pip install feedparser
+
+      - name: Run script
+        run: python run_pipeline.py
+
+      - name: Commit output
+        run: |
+          git config --global user.name "bot"
+          git config --global user.email "bot@example.com"
+          git add outputs/
+          git commit -m "daily research" || echo "no changes"
+          git push
