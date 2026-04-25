@@ -48,4 +48,4 @@ jobs:
           fi
 
           git commit -m "daily research"
-          git push origin main
+          git push --force-with-lease origin main
