@@ -14,6 +14,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -31,5 +34,5 @@ jobs:
           git config --global user.name "bot"
           git config --global user.email "bot@example.com"
           git add outputs/
-          git commit -m "daily research" || echo "no changes"
-          git push
+          git diff --cached --quiet || git commit -m "daily research"
+          git push origin main
