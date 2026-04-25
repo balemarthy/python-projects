@@ -18,7 +18,7 @@ jobs:
           python-version: "3.10"
 
       - name: Install deps
-        run: pip install feedparser
+        run: pip install feedparser newspaper3k lxml_html_clean
 
       - name: Run script
         run: python run_pipeline.py
