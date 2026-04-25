@@ -12,13 +12,16 @@ FEEDS = [
  "https://hackaday.com/feed/"
 ]
 
+# UPDATED: Career-focused filtering
 KEYWORDS = [
- "embedded","firmware","rtos","driver","kernel","linux",
- "tinyml","machine learning","ai","edge ai",
- "automotive","ev","autonomous","adas",
- "semiconductor","chip","soc","microcontroller",
- "release","launch","new","announcement",
- "trend","future","next-gen"
+  "hiring","job","career","skills","engineer","salary",
+  "debugging","firmware","rtos","driver","linux",
+  "embedded systems","bare metal",
+  "project","build","implementation","case study",
+  "how to","guide",
+  "automotive","ev","robotics","industrial",
+  "embedded ai","edge computing",
+  "gcc","clang","toolchain","ci/cd","testing"
 ]
 
 
@@ -44,9 +47,20 @@ try:
         d = feedparser.parse(url)
         print(f"Fetched {len(d.entries)} items from {url}")
         for e in d.entries:
+            title_lower = e.title.lower()
+
+            # FILTER: remove low-value announcement posts
+            if any(x in title_lower for x in ["launch", "announced", "released"]):
+                continue
+
             s = score(e.title)
             if s > 0:
                 text = get_article_text(e.link)
+
+                # FILTER: ignore shallow content
+                if len(text) < 300:
+                    continue
+
                 items.append((s, e.title, e.link, text))
 except Exception as e:
     print("Pipeline error:", e)
