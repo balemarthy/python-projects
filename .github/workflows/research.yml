@@ -26,6 +26,9 @@ jobs:
       - name: Install deps
         run: pip install feedparser newspaper3k lxml_html_clean
 
+      - name: Ensure outputs folder
+        run: mkdir -p outputs
+
       - name: Run script
         run: python run_pipeline.py
 
@@ -36,7 +39,6 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          mkdir -p outputs
           git add outputs/
 
           if git diff --cached --quiet; then
