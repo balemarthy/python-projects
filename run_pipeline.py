@@ -572,6 +572,11 @@ def coverage_status(items: List[Item], min_links_per_theme: int) -> Tuple[str, s
     return "INSUFFICIENT", f"{len(items)} links across {len(sources)} sources"
 
 
+def is_theme_good(items: List[Item], min_links_per_theme: int) -> bool:
+    sources = {i.source for i in items}
+    return len(items) >= min_links_per_theme and len(sources) >= 2
+
+
 def write_single_report(
     themes: List[str],
     results: Dict[str, List[Item]],
@@ -666,6 +671,25 @@ def main(argv: Optional[List[str]] = None) -> int:
                 target_total_links=max(20, args.target_total_links),
                 strict_diversity=bool(args.strict_diversity),
             )
+
+            # Adaptive hardening pass:
+            # If a theme is still weak, run a broader second pass with relaxed diversity
+            # so tomorrow's report is more usable for manual content selection.
+            if not is_theme_good(curated, max(1, args.min_links_per_theme)):
+                recovery_curated, recovery_notes = mine_theme(
+                    theme=theme,
+                    query_depth=min(96, max(18, args.query_depth + 16)),
+                    target_total_links=max(30, int(args.target_total_links * 1.35)),
+                    strict_diversity=False,
+                )
+                if len(recovery_curated) > len(curated):
+                    curated = recovery_curated
+                    source_notes.update(recovery_notes)
+                    source_notes["recovery"] = (
+                        "Adaptive recovery pass enabled: expanded query depth and "
+                        "relaxed diversity constraints for better coverage."
+                    )
+
             results[theme] = curated
             source_notes_by_theme[theme] = source_notes
 
