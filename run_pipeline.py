@@ -303,8 +303,20 @@ def assign_intent(item: Item) -> str:
     best_intent = "Implementation"
     best_score = -1
 
+    # Priority boosts to avoid broad implementation terms swallowing
+    # explicit intent signals like debugging/interview/tooling.
+    intent_boost = {
+        "Debugging": 2,
+        "Interview": 2,
+        "Tooling": 2,
+        "Projects": 1,
+        "Career/Market": 1,
+        "Implementation": 0,
+    }
+
     for intent, keywords in INTENT_KEYWORDS.items():
-        score = sum(1 for kw in keywords if kw in hay)
+        hits = sum(1 for kw in keywords if kw in hay)
+        score = hits * (1 + intent_boost.get(intent, 0))
         if score > best_score:
             best_score = score
             best_intent = intent
