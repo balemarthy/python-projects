@@ -30,7 +30,7 @@ jobs:
         env:
           THEMES: "embedded systems,firmware jobs,rtos"
         run: |
-          python run_pipeline.py --themes "$THEMES" --out-dir .
+          python run_pipeline.py --themes "$THEMES" --out-dir . --query-depth 28 --max-per-source 14
 
       - name: Commit outputs
         run: |
