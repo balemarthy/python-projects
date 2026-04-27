@@ -2,66 +2,108 @@
 
 ## embedded systems
 
-### Youtube
+Coverage: **INSUFFICIENT** (0 links across 0 sources)
 
-- [YouTube Search](https://www.youtube.com/results?search_query=embedded+systems)
+### Debugging
 
-### Medium
+- Insufficient quality for this intent bucket in this run.
 
-- [Medium Embedded Tag](https://medium.com/tag/embedded-systems)
+### Implementation
 
-### Reddit
+- Insufficient quality for this intent bucket in this run.
 
-- [Reddit Embedded Search](https://www.reddit.com/search/?q=embedded+systems)
+### Tooling
 
-### Quora
+- Insufficient quality for this intent bucket in this run.
 
-- [Quora Embedded Search](https://www.quora.com/search?q=embedded%20systems)
+### Interview
 
-### Blogs
+- Insufficient quality for this intent bucket in this run.
 
-- [Embedded Artistry](https://embeddedartistry.com/)
+### Projects
+
+- Insufficient quality for this intent bucket in this run.
+
+### Career/Market
+
+- Insufficient quality for this intent bucket in this run.
+
+### Source Notes
+
+- youtube: Insufficient quality or unavailable in this run (core source).
+- medium: Insufficient quality or unavailable in this run (core source).
+- blogs: Insufficient quality or unavailable in this run (core source).
+- reddit: Insufficient quality; excluded from curated output.
+- quora: Insufficient quality; excluded from curated output.
 
 ## firmware jobs
 
-### Youtube
+Coverage: **INSUFFICIENT** (0 links across 0 sources)
 
-- [YouTube Search](https://www.youtube.com/results?search_query=embedded+systems)
+### Debugging
 
-### Medium
+- Insufficient quality for this intent bucket in this run.
 
-- [Medium Embedded Tag](https://medium.com/tag/embedded-systems)
+### Implementation
 
-### Reddit
+- Insufficient quality for this intent bucket in this run.
 
-- [Reddit Embedded Search](https://www.reddit.com/search/?q=embedded+systems)
+### Tooling
 
-### Quora
+- Insufficient quality for this intent bucket in this run.
 
-- [Quora Embedded Search](https://www.quora.com/search?q=embedded%20systems)
+### Interview
 
-### Blogs
+- Insufficient quality for this intent bucket in this run.
 
-- [Embedded Artistry](https://embeddedartistry.com/)
+### Projects
+
+- Insufficient quality for this intent bucket in this run.
+
+### Career/Market
+
+- Insufficient quality for this intent bucket in this run.
+
+### Source Notes
+
+- youtube: Insufficient quality or unavailable in this run (core source).
+- medium: Insufficient quality or unavailable in this run (core source).
+- blogs: Insufficient quality or unavailable in this run (core source).
+- reddit: Insufficient quality; excluded from curated output.
+- quora: Insufficient quality; excluded from curated output.
 
 ## rtos
 
-### Youtube
+Coverage: **INSUFFICIENT** (0 links across 0 sources)
 
-- [YouTube Search](https://www.youtube.com/results?search_query=embedded+systems)
+### Debugging
 
-### Medium
+- Insufficient quality for this intent bucket in this run.
 
-- [Medium Embedded Tag](https://medium.com/tag/embedded-systems)
+### Implementation
 
-### Reddit
+- Insufficient quality for this intent bucket in this run.
 
-- [Reddit Embedded Search](https://www.reddit.com/search/?q=embedded+systems)
+### Tooling
 
-### Quora
+- Insufficient quality for this intent bucket in this run.
 
-- [Quora Embedded Search](https://www.quora.com/search?q=embedded%20systems)
+### Interview
 
-### Blogs
+- Insufficient quality for this intent bucket in this run.
 
-- [Embedded Artistry](https://embeddedartistry.com/)
+### Projects
+
+- Insufficient quality for this intent bucket in this run.
+
+### Career/Market
+
+- Insufficient quality for this intent bucket in this run.
+
+### Source Notes
+
+- youtube: Insufficient quality or unavailable in this run (core source).
+- medium: Insufficient quality or unavailable in this run (core source).
+- blogs: Insufficient quality or unavailable in this run (core source).
+- reddit: Insufficient quality; excluded from curated output.
+- quora: Insufficient quality; excluded from curated output.
