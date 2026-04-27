@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
-from urllib.parse import quote_plus
+from urllib.parse import parse_qs, quote_plus, unquote, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -81,6 +81,12 @@ def parse_duckduckgo_results(html: str, source: str, query: str, max_items: int)
             continue
 
         href = (a.get("href") or "").strip()
+        # DuckDuckGo often wraps result URLs in redirect links like /l/?uddg=...
+        if "duckduckgo.com/l/" in href or href.startswith("/l/?"):
+            parsed = urlparse(href)
+            q = parse_qs(parsed.query)
+            if "uddg" in q and q["uddg"]:
+                href = unquote(q["uddg"][0])
         title = strip_whitespace(a.get_text(" ", strip=True))
         snippet = ""
         if snippet_el:
@@ -100,6 +106,27 @@ def ddg_search(query: str, source: str, max_items: int) -> List[Item]:
     url = f"https://duckduckgo.com/html/?q={quote_plus(query)}"
     html = get_text(url)
     return parse_duckduckgo_results(html, source, query, max_items)
+
+
+def bing_rss_search(query: str, source: str, max_items: int) -> List[Item]:
+    url = f"https://www.bing.com/search?q={quote_plus(query)}&format=rss"
+    xml_text = get_text(url)
+    soup = BeautifulSoup(xml_text, "xml")
+    items: List[Item] = []
+
+    for entry in soup.find_all("item"):
+        title = strip_whitespace(entry.title.get_text(" ", strip=True)) if entry.title else ""
+        link = strip_whitespace(entry.link.get_text(" ", strip=True)) if entry.link else ""
+        desc = strip_whitespace(entry.description.get_text(" ", strip=True)) if entry.description else ""
+
+        if not title or not link:
+            continue
+
+        items.append(Item(source=source, title=title, url=link, snippet=desc, query=query))
+        if len(items) >= max_items:
+            break
+
+    return items
 
 
 def generate_queries(theme: str) -> Dict[str, List[str]]:
@@ -167,17 +194,23 @@ def mine_theme(theme: str, max_per_query: int, max_per_source: int) -> Dict[str,
         aggregate: List[Item] = []
         for q in source_queries:
             try:
-                aggregate.extend(ddg_search(q, source, max_per_query))
+                found = ddg_search(q, source, max_per_query)
+                if not found:
+                    found = bing_rss_search(q, source, max_per_query)
+                aggregate.extend(found)
             except Exception as exc:
-                aggregate.append(
-                    Item(
-                        source=source,
-                        title=f"Search failed for query: {q}",
-                        url="",
-                        snippet=f"Error: {exc}",
-                        query=q,
+                try:
+                    aggregate.extend(bing_rss_search(q, source, max_per_query))
+                except Exception:
+                    aggregate.append(
+                        Item(
+                            source=source,
+                            title=f"Search failed for query: {q}",
+                            url="",
+                            snippet=f"Error: {exc}",
+                            query=q,
+                        )
                     )
-                )
 
         cleaned = [x for x in aggregate if x.url]
         cleaned = dedupe_items(cleaned, max_items=max_per_source * 2)
