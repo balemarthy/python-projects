@@ -18,7 +18,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import quote_plus
 
 import requests
@@ -28,18 +28,12 @@ USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/125.0.0.0 Safari/537.36 "
-    "research-miner/2.0"
+    "research-miner/3.0"
 )
 HEADERS = {"User-Agent": USER_AGENT, "Accept-Language": "en-US,en;q=0.9"}
 
 DEFAULT_THEMES = ["embedded systems", "firmware jobs", "rtos"]
-BLOG_DOMAINS = [
-    "embeddedartistry.com",
-    "interrupt.memfault.com",
-    "embeddedrelated.com",
-    "allaboutcircuits.com",
-    "hackaday.com",
-]
+
 BLOG_FEEDS = [
     "https://www.embedded.com/feed/",
     "https://www.embeddedrelated.com/blogs/rss.php",
@@ -48,6 +42,37 @@ BLOG_FEEDS = [
     "https://cnx-software.com/feed/",
     "https://hackaday.com/feed/",
 ]
+
+SUBSTACK_FEEDS = [
+    "https://newsletter.pragmaticengineer.com/feed",
+    "https://www.exponentialview.co/feed",
+    "https://www.notboring.co/feed",
+    "https://www.tldr.tech/rss",
+]
+
+MEDIUM_BASE_FEEDS = [
+    "https://medium.com/feed/topic/programming",
+    "https://medium.com/feed/topic/technology",
+]
+
+FALLBACK_ITEMS: Dict[str, List[Tuple[str, str]]] = {
+    "youtube": [
+        ("YouTube Search: embedded systems", "https://www.youtube.com/results?search_query=embedded+systems"),
+        ("YouTube Search: firmware career", "https://www.youtube.com/results?search_query=firmware+career"),
+    ],
+    "medium": [
+        ("Medium Tag: embedded-systems", "https://medium.com/tag/embedded-systems"),
+        ("Medium Tag: firmware", "https://medium.com/tag/firmware"),
+    ],
+    "substack": [
+        ("Pragmatic Engineer", "https://newsletter.pragmaticengineer.com/"),
+        ("Exponential View", "https://www.exponentialview.co/"),
+    ],
+    "blogs": [
+        ("Embedded Artistry", "https://embeddedartistry.com/"),
+        ("Memfault Interrupt", "https://interrupt.memfault.com/blog"),
+    ],
+}
 
 
 @dataclass
@@ -68,104 +93,62 @@ def strip_whitespace(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def strip_html(text: str) -> str:
+    if not text:
+        return ""
+    plain = BeautifulSoup(text, "html.parser").get_text(" ", strip=True)
+    return strip_whitespace(plain)
+
+
 def get_text(url: str, timeout: int = 25) -> str:
     response = requests.get(url, headers=HEADERS, timeout=timeout)
     response.raise_for_status()
     return response.text
 
 
-def parse_rss(xml_text: str, source: str, query: str, max_items: int) -> List[Item]:
+def parse_feed(xml_text: str, source: str, query: str, max_items: int) -> List[Item]:
     soup = BeautifulSoup(xml_text, "xml")
-    items: List[Item] = []
+    out: List[Item] = []
 
-    for entry in soup.find_all("item"):
-        title = strip_whitespace(entry.title.get_text(" ", strip=True)) if entry.title else ""
-        link = strip_whitespace(entry.link.get_text(" ", strip=True)) if entry.link else ""
-        desc = strip_whitespace(entry.description.get_text(" ", strip=True)) if entry.description else ""
+    # RSS items
+    for node in soup.find_all("item"):
+        title = strip_whitespace(node.title.get_text(" ", strip=True)) if node.title else ""
+        url = strip_whitespace(node.link.get_text(" ", strip=True)) if node.link else ""
+        desc_node = node.description or node.find("content:encoded")
+        desc = strip_html(desc_node.get_text(" ", strip=True)) if desc_node else ""
 
-        if not title or not link:
-            continue
+        if title and url:
+            out.append(Item(source=source, title=title, url=url, snippet=desc, query=query))
+            if len(out) >= max_items:
+                return out
 
-        items.append(Item(source=source, title=title, url=link, snippet=desc, query=query))
-        if len(items) >= max_items:
-            break
+    # Atom entries (used by YouTube)
+    for node in soup.find_all("entry"):
+        title = strip_whitespace(node.title.get_text(" ", strip=True)) if node.title else ""
 
-    return items
+        url = ""
+        link_tag = node.find("link")
+        if link_tag:
+            url = (link_tag.get("href") or "").strip() or strip_whitespace(link_tag.get_text(" ", strip=True))
 
+        desc_node = node.find("summary") or node.find("content")
+        desc = strip_html(desc_node.get_text(" ", strip=True)) if desc_node else ""
 
-def google_news_rss_search(query: str, source: str, max_items: int) -> List[Item]:
-    # Google News RSS is more stable in CI than scraping HTML SERPs.
-    url = (
-        "https://news.google.com/rss/search?"
-        f"q={quote_plus(query)}&hl=en-US&gl=US&ceid=US:en"
-    )
-    xml_text = get_text(url)
-    return parse_rss(xml_text, source, query, max_items)
+        if title and url:
+            out.append(Item(source=source, title=title, url=url, snippet=desc, query=query))
+            if len(out) >= max_items:
+                return out
 
-
-def medium_feed_search(theme: str, max_items: int) -> List[Item]:
-    # Medium tag feed can fail for some tags; caller should fallback.
-    tag = re.sub(r"[^a-z0-9]+", "-", theme.lower()).strip("-")
-    if not tag:
-        return []
-
-    url = f"https://medium.com/feed/tag/{tag}"
-    try:
-        xml_text = get_text(url)
-        return parse_rss(xml_text, "medium", f"medium tag:{tag}", max_items)
-    except Exception:
-        return []
+    return out
 
 
-def blog_feed_search(theme: str, max_items: int) -> List[Item]:
+def matches_theme(item: Item, theme: str) -> bool:
     tokens = [t for t in re.findall(r"[a-z0-9]+", theme.lower()) if len(t) > 2]
-    gathered: List[Item] = []
+    if not tokens:
+        return True
 
-    for feed in BLOG_FEEDS:
-        try:
-            xml_text = get_text(feed)
-            items = parse_rss(xml_text, "blogs", f"feed:{feed}", max_items=8)
-        except Exception:
-            continue
-
-        for item in items:
-            hay = f"{item.title} {item.snippet}".lower()
-            if any(tok in hay for tok in tokens):
-                gathered.append(item)
-
-    if not gathered:
-        # Fallback to latest blog entries when exact topic match is sparse.
-        for feed in BLOG_FEEDS:
-            try:
-                xml_text = get_text(feed)
-                gathered.extend(parse_rss(xml_text, "blogs", f"feed:{feed}", max_items=4))
-            except Exception:
-                continue
-
-    return dedupe_items(gathered, max_items=max_items)
-
-
-def generate_queries(theme: str) -> Dict[str, List[str]]:
-    blog_sites = " OR ".join([f"site:{d}" for d in BLOG_DOMAINS])
-    return {
-        "youtube": [
-            f"site:youtube.com {theme} tutorial",
-            f"site:youtube.com {theme} interview",
-            f"site:youtube.com {theme} roadmap",
-        ],
-        "medium": [
-            f"site:medium.com {theme}",
-            f"site:medium.com {theme} career",
-        ],
-        "substack": [
-            f"site:substack.com {theme}",
-            f"site:substack.com {theme} newsletter",
-            f"site:substack.com {theme} career",
-        ],
-        "blogs": [
-            f"({blog_sites}) {theme}",
-        ],
-    }
+    hay = f"{item.title} {item.snippet}".lower()
+    return any(tok in hay for tok in tokens)
 
 
 def dedupe_items(items: List[Item], max_items: int) -> List[Item]:
@@ -197,67 +180,115 @@ def rank_item(item: Item, theme: str) -> int:
             score += 2
 
     if "youtube.com" in item.url:
+        score += 2
+    if "medium.com" in item.url:
+        score += 1
+    if "substack" in item.url:
         score += 1
 
     return score
 
 
-def mine_theme(theme: str, max_per_query: int, max_per_source: int) -> Dict[str, List[Item]]:
-    queries = generate_queries(theme)
+def fetch_from_feed_urls(urls: List[str], source: str, query: str, max_items: int) -> Tuple[List[Item], List[str]]:
+    all_items: List[Item] = []
+    errors: List[str] = []
+
+    for url in urls:
+        try:
+            xml_text = get_text(url)
+            all_items.extend(parse_feed(xml_text, source, query, max_items=max_items))
+        except Exception as exc:
+            errors.append(f"{url} -> {exc}")
+
+    return all_items, errors
+
+
+def youtube_items(theme: str, max_items: int) -> Tuple[List[Item], List[str]]:
+    queries = [theme, f"{theme} tutorial", f"{theme} career", f"{theme} roadmap"]
+    urls = [f"https://www.youtube.com/feeds/videos.xml?search_query={quote_plus(q)}" for q in queries]
+    items, errors = fetch_from_feed_urls(urls, "youtube", query=theme, max_items=max_items)
+
+    filtered = [i for i in items if matches_theme(i, theme)]
+    items = filtered or items
+    items = dedupe_items(items, max_items=max_items)
+    items.sort(key=lambda x: rank_item(x, theme), reverse=True)
+    return items[:max_items], errors
+
+
+def medium_items(theme: str, max_items: int) -> Tuple[List[Item], List[str]]:
+    tag = re.sub(r"[^a-z0-9]+", "-", theme.lower()).strip("-")
+    urls = MEDIUM_BASE_FEEDS.copy()
+    if tag:
+        urls.insert(0, f"https://medium.com/feed/tag/{tag}")
+
+    items, errors = fetch_from_feed_urls(urls, "medium", query=theme, max_items=max_items)
+    filtered = [i for i in items if matches_theme(i, theme)]
+    items = filtered or items
+    items = dedupe_items(items, max_items=max_items)
+    items.sort(key=lambda x: rank_item(x, theme), reverse=True)
+    return items[:max_items], errors
+
+
+def substack_items(theme: str, max_items: int) -> Tuple[List[Item], List[str]]:
+    items, errors = fetch_from_feed_urls(SUBSTACK_FEEDS, "substack", query=theme, max_items=max_items)
+    filtered = [i for i in items if matches_theme(i, theme)]
+    items = filtered or items
+    items = dedupe_items(items, max_items=max_items)
+    items.sort(key=lambda x: rank_item(x, theme), reverse=True)
+    return items[:max_items], errors
+
+
+def blog_items(theme: str, max_items: int) -> Tuple[List[Item], List[str]]:
+    items, errors = fetch_from_feed_urls(BLOG_FEEDS, "blogs", query=theme, max_items=max_items)
+    filtered = [i for i in items if matches_theme(i, theme)]
+    items = filtered or items
+    items = dedupe_items(items, max_items=max_items)
+    items.sort(key=lambda x: rank_item(x, theme), reverse=True)
+    return items[:max_items], errors
+
+
+def ensure_non_empty(source: str, theme: str, items: List[Item]) -> List[Item]:
+    if items:
+        return items
+
+    fallback = []
+    for title, url in FALLBACK_ITEMS.get(source, []):
+        fallback.append(
+            Item(
+                source=source,
+                title=title,
+                url=url,
+                snippet=f"Fallback reference for theme: {theme}",
+                query="fallback",
+            )
+        )
+
+    return fallback
+
+
+def mine_theme(theme: str, max_per_source: int) -> Tuple[Dict[str, List[Item]], Dict[str, List[str]]]:
     mined: Dict[str, List[Item]] = {"youtube": [], "medium": [], "substack": [], "blogs": []}
+    errors: Dict[str, List[str]] = {"youtube": [], "medium": [], "substack": [], "blogs": []}
 
-    # YouTube / Substack: Google News RSS site-filtered discovery.
-    for source in ["youtube", "substack"]:
-        aggregate: List[Item] = []
-        for q in queries[source]:
-            try:
-                aggregate.extend(google_news_rss_search(q, source, max_per_query))
-            except Exception:
-                continue
+    yt, yt_err = youtube_items(theme, max_per_source)
+    md, md_err = medium_items(theme, max_per_source)
+    ss, ss_err = substack_items(theme, max_per_source)
+    bl, bl_err = blog_items(theme, max_per_source)
 
-        if not aggregate:
-            # Broad fallback query.
-            try:
-                aggregate.extend(google_news_rss_search(theme, source, max_per_query))
-            except Exception:
-                pass
+    mined["youtube"] = ensure_non_empty("youtube", theme, yt)
+    mined["medium"] = ensure_non_empty("medium", theme, md)
+    mined["substack"] = ensure_non_empty("substack", theme, ss)
+    mined["blogs"] = ensure_non_empty("blogs", theme, bl)
 
-        aggregate = dedupe_items(aggregate, max_items=max_per_source * 2)
-        aggregate.sort(key=lambda x: rank_item(x, theme), reverse=True)
-        mined[source] = aggregate[:max_per_source]
+    errors["youtube"] = yt_err
+    errors["medium"] = md_err
+    errors["substack"] = ss_err
+    errors["blogs"] = bl_err
 
-    # Medium: prefer Medium tag feed, fallback to Google News RSS.
-    medium_items = medium_feed_search(theme, max_items=max_per_source)
-    if not medium_items:
-        aggregate: List[Item] = []
-        for q in queries["medium"]:
-            try:
-                aggregate.extend(google_news_rss_search(q, "medium", max_per_query))
-            except Exception:
-                continue
-        medium_items = dedupe_items(aggregate, max_items=max_per_source)
-
-    medium_items.sort(key=lambda x: rank_item(x, theme), reverse=True)
-    mined["medium"] = medium_items[:max_per_source]
-
-    # Blogs: prefer direct blog feeds, fallback to Google News site-filter query.
-    blog_items = blog_feed_search(theme, max_items=max_per_source)
-    if not blog_items:
-        aggregate: List[Item] = []
-        for q in queries["blogs"]:
-            try:
-                aggregate.extend(google_news_rss_search(q, "blogs", max_per_query))
-            except Exception:
-                continue
-        blog_items = dedupe_items(aggregate, max_items=max_per_source)
-
-    blog_items.sort(key=lambda x: rank_item(x, theme), reverse=True)
-    mined["blogs"] = blog_items[:max_per_source]
-
-    return mined
+    return mined, errors
 
 
-def write_source_markdown(theme: str, source: str, items: List[Item], out_dir: Path) -> Path:
+def write_source_markdown(theme: str, source: str, items: List[Item], out_dir: Path, errors: List[str]) -> Path:
     file_path = out_dir / f"{slugify(theme)}_{source}.md"
     lines: List[str] = []
     lines.append(f"# {source.title()} Research: {theme}")
@@ -267,6 +298,7 @@ def write_source_markdown(theme: str, source: str, items: List[Item], out_dir: P
 
     if not items:
         lines.append("No results found.")
+        lines.append("")
     else:
         for idx, item in enumerate(items, start=1):
             lines.append(f"## {idx}. {item.title}")
@@ -280,6 +312,14 @@ def write_source_markdown(theme: str, source: str, items: List[Item], out_dir: P
             lines.append("")
             lines.append("---")
             lines.append("")
+
+    if errors:
+        lines.append("## Source Notes")
+        lines.append("")
+        lines.append("Some feeds failed during this run:")
+        lines.append("")
+        for err in errors[:10]:
+            lines.append(f"- {err}")
 
     file_path.write_text("\n".join(lines), encoding="utf-8")
     return file_path
@@ -361,13 +401,8 @@ def parse_themes(raw: str) -> List[str]:
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Mine topic research across high-signal sources")
-    parser.add_argument(
-        "--themes",
-        default=",".join(DEFAULT_THEMES),
-        help="Comma-separated topics/themes",
-    )
+    parser.add_argument("--themes", default=",".join(DEFAULT_THEMES), help="Comma-separated topics/themes")
     parser.add_argument("--out-dir", default="outputs", help="Output directory")
-    parser.add_argument("--max-per-query", type=int, default=8, help="Results per query")
     parser.add_argument("--max-per-source", type=int, default=12, help="Saved results per source per theme")
     parser.add_argument("--max-gold", type=int, default=20, help="Items in [theme]_gold.md")
     return parser.parse_args(argv)
@@ -383,12 +418,12 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     try:
         for theme in themes:
-            source_map = mine_theme(theme, max_per_query=max(1, args.max_per_query), max_per_source=max(1, args.max_per_source))
+            source_map, error_map = mine_theme(theme, max_per_source=max(1, args.max_per_source))
             mined_by_theme[theme] = source_map
 
             for source, items in source_map.items():
                 print(f"{theme} -> {source}: {len(items)} items")
-                file_path = write_source_markdown(theme, source, items, out_dir)
+                file_path = write_source_markdown(theme, source, items, out_dir, errors=error_map.get(source, []))
                 print(f"Saved {file_path}")
 
             gold_path = write_gold_markdown(theme, source_map, out_dir, max_items=max(1, args.max_gold))
