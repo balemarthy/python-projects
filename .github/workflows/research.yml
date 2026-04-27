@@ -1,4 +1,4 @@
-name: Daily Research Miner
+﻿name: Daily Research Miner
 
 on:
   schedule:
@@ -30,16 +30,16 @@ jobs:
         env:
           THEMES: "embedded systems,firmware jobs,rtos"
         run: |
-          python run_pipeline.py --themes "$THEMES" --out-dir outputs
+          python run_pipeline.py --themes "$THEMES" --out-dir .
 
       - name: Commit outputs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add outputs/*.md
+          git add latest_news_*.md
           if git diff --staged --quiet; then
             echo "No markdown changes"
           else
-            git commit -m "chore: update mined research outputs"
+            git commit -m "chore: update research report"
             git push
           fi
