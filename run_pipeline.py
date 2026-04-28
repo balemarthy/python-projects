@@ -23,6 +23,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 from urllib.parse import parse_qsl, quote_plus, urlparse, urlunparse
+import xml.etree.ElementTree as ET
 
 import requests
 from bs4 import BeautifulSoup
@@ -255,30 +256,73 @@ def get_text(url: str, timeout: int = 30) -> str:
     return response.text
 
 
-def parse_feed(xml_text: str, source: str, query: str, max_items: int) -> List[Item]:
-    soup = BeautifulSoup(xml_text, "xml")
-    out: List[Item] = []
+def _local_name(tag: str) -> str:
+    return tag.split("}", 1)[-1] if "}" in tag else tag
 
-    for node in soup.find_all("item"):
-        title = strip_whitespace(node.title.get_text(" ", strip=True)) if node.title else ""
-        url = strip_whitespace(node.link.get_text(" ", strip=True)) if node.link else ""
-        desc_node = node.description or node.find("content:encoded")
-        desc = strip_html(desc_node.get_text(" ", strip=True)) if desc_node else ""
+
+def _find_child_text(node: ET.Element, names: List[str]) -> str:
+    for child in node:
+        if _local_name(child.tag) in names:
+            text = child.text or ""
+            if text.strip():
+                return strip_whitespace(text)
+    return ""
+
+
+def parse_feed(xml_text: str, source: str, query: str, max_items: int) -> List[Item]:
+    """Parse RSS/Atom robustly using stdlib XML parser (no lxml dependency)."""
+    out: List[Item] = []
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return out
+
+    # RSS items
+    for node in root.iter():
+        if _local_name(node.tag) != "item":
+            continue
+        title = _find_child_text(node, ["title"])
+        url = _find_child_text(node, ["link"])
+        desc = _find_child_text(node, ["description", "encoded"])
         if title and url:
-            out.append(Item(source=source, title=title, url=normalize_url(url), snippet=desc, query=query))
+            out.append(
+                Item(
+                    source=source,
+                    title=title,
+                    url=normalize_url(url),
+                    snippet=strip_html(desc),
+                    query=query,
+                )
+            )
             if len(out) >= max_items:
                 return out
 
-    for node in soup.find_all("entry"):
-        title = strip_whitespace(node.title.get_text(" ", strip=True)) if node.title else ""
-        link_tag = node.find("link")
-        url = (link_tag.get("href") or "").strip() if link_tag else ""
-        if not url and link_tag:
-            url = strip_whitespace(link_tag.get_text(" ", strip=True))
-        desc_node = node.find("summary") or node.find("content")
-        desc = strip_html(desc_node.get_text(" ", strip=True)) if desc_node else ""
+    # Atom entries (e.g., YouTube feed)
+    for node in root.iter():
+        if _local_name(node.tag) != "entry":
+            continue
+        title = _find_child_text(node, ["title"])
+        url = ""
+        summary = ""
+        for child in node:
+            name = _local_name(child.tag)
+            if name == "link":
+                href = (child.attrib.get("href") or "").strip()
+                rel = (child.attrib.get("rel") or "").strip().lower()
+                if href and (not url or rel == "alternate"):
+                    url = href
+            elif name in {"summary", "content"} and not summary:
+                summary = strip_whitespace(child.text or "")
         if title and url:
-            out.append(Item(source=source, title=title, url=normalize_url(url), snippet=desc, query=query))
+            out.append(
+                Item(
+                    source=source,
+                    title=title,
+                    url=normalize_url(url),
+                    snippet=strip_html(summary),
+                    query=query,
+                )
+            )
             if len(out) >= max_items:
                 return out
 
@@ -639,65 +683,6 @@ def is_theme_good(items: List[Item], min_links_per_theme: int) -> bool:
     return len(items) >= min_links_per_theme and len(sources) >= 2
 
 
-def emergency_discovery_items(theme: str) -> List[Item]:
-    """Fail-safe: always provide actionable discovery links if retrieval returns zero."""
-    q = quote_plus(theme)
-    items = [
-        Item(
-            source="youtube",
-            title=f"YouTube discovery: {theme}",
-            url=f"https://www.youtube.com/results?search_query={q}",
-            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
-            query=theme,
-            intent="Implementation",
-            score=1,
-        ),
-        Item(
-            source="medium",
-            title=f"Medium discovery: {theme}",
-            url=f"https://medium.com/search?q={q}",
-            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
-            query=theme,
-            intent="Implementation",
-            score=1,
-        ),
-        Item(
-            source="blogs",
-            title=f"Google blog discovery: {theme}",
-            url=(
-                "https://www.google.com/search?q="
-                + quote_plus(
-                    f"(site:embeddedartistry.com OR site:interrupt.memfault.com OR "
-                    f"site:embeddedrelated.com OR site:hackaday.com OR site:embedded.com) {theme}"
-                )
-            ),
-            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
-            query=theme,
-            intent="Tooling",
-            score=1,
-        ),
-        Item(
-            source="reddit",
-            title=f"Reddit discovery: {theme}",
-            url=f"https://www.reddit.com/search/?q={q}",
-            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
-            query=theme,
-            intent="Interview",
-            score=1,
-        ),
-        Item(
-            source="quora",
-            title=f"Quora discovery: {theme}",
-            url=f"https://www.quora.com/search?q={q}",
-            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
-            query=theme,
-            intent="Career/Market",
-            score=1,
-        ),
-    ]
-    return items
-
-
 def write_single_report(
     themes: List[str],
     results: Dict[str, List[Item]],
@@ -826,13 +811,6 @@ def main(argv: Optional[List[str]] = None) -> int:
                         "Adaptive recovery pass enabled: expanded query depth and "
                         "relaxed diversity constraints for better coverage."
                     )
-
-            if not curated:
-                curated = emergency_discovery_items(theme)
-                source_notes["emergency"] = (
-                    "Emergency discovery mode activated because retrieval returned zero items. "
-                    "Theme-specific discovery links were written to avoid empty report output."
-                )
 
             results[theme] = curated
             source_notes_by_theme[theme] = source_notes
