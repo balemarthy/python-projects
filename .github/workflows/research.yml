@@ -34,7 +34,7 @@ jobs:
         env:
           THEMES: "embedded systems,firmware jobs,rtos"
         run: |
-          python run_pipeline.py --themes "$THEMES" --out-dir . --query-depth 72 --target-total-links 120 --min-links-per-theme 12 --strict-diversity
+          python run_pipeline.py --themes "$THEMES" --out-dir . --profile time_saver --query-depth 72 --target-total-links 120 --min-links-per-theme 12 --strict-diversity
 
       - name: Commit outputs
         run: |

@@ -49,6 +49,23 @@ INTENT_BUCKETS = (
     "Career/Market",
 )
 
+PROFILE_PRESETS = {
+    "time_saver": {
+        "query_depth": 80,
+        "target_total_links": 90,
+        "min_links_per_theme": 12,
+        "strict_diversity": True,
+        "min_item_score": 14,
+    },
+    "balanced": {
+        "query_depth": 72,
+        "target_total_links": 120,
+        "min_links_per_theme": 12,
+        "strict_diversity": True,
+        "min_item_score": 10,
+    },
+}
+
 # Fixed dictionaries for deterministic long-tail expansion.
 TECH_INTENT_TERMS = [
     "debugging",
@@ -162,6 +179,19 @@ INTENT_KEYWORDS: Dict[str, List[str]] = {
         "remote",
     ],
 }
+
+LOW_SIGNAL_TERMS = [
+    "top 10",
+    "top ten",
+    "motivation",
+    "inspirational",
+    "click here",
+    "ultimate list",
+    "what is",
+    "basics of",
+    "beginner tips",
+    "easy way",
+]
 
 
 @dataclass
@@ -359,6 +389,12 @@ def score_item(item: Item, theme: str) -> int:
         "quora": 1,
     }
     score += source_bonus.get(item.source, 0)
+
+    # Penalize low-signal patterns that waste review time.
+    for bad in LOW_SIGNAL_TERMS:
+        if bad in hay:
+            score -= 5
+
     return score
 
 
@@ -466,6 +502,7 @@ def curate_items(
     candidates_by_source: Dict[str, List[Item]],
     target_total_links: int,
     strict_diversity: bool,
+    min_item_score: int,
 ) -> Tuple[List[Item], Dict[str, str]]:
     """collect_and_curate(theme): score, bucket, dedupe, diversity constraints."""
     source_notes: Dict[str, str] = {}
@@ -496,6 +533,7 @@ def curate_items(
     all_candidates: List[Item] = []
     for src, items in candidates_by_source.items():
         source_deduped = dedupe_items(sorted(items, key=lambda i: i.score, reverse=True), max_items=300)
+        source_deduped = [i for i in source_deduped if i.score >= min_item_score]
         candidates_by_source[src] = source_deduped
         all_candidates.extend(source_deduped)
 
@@ -552,6 +590,7 @@ def mine_theme(
     query_depth: int,
     target_total_links: int,
     strict_diversity: bool,
+    min_item_score: int,
 ) -> Tuple[List[Item], Dict[str, str]]:
     queries = generate_long_tail_queries(theme, max_queries=query_depth)
     # Scale query sampling with depth but keep runtime bounded for daily jobs.
@@ -566,6 +605,7 @@ def mine_theme(
         candidates_by_source=candidates_by_source,
         target_total_links=target_total_links,
         strict_diversity=strict_diversity,
+        min_item_score=min_item_score,
     )
     return curated, source_notes
 
@@ -655,9 +695,16 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Technical-first research miner (single report)")
     parser.add_argument("--themes", default=",".join(DEFAULT_THEMES), help="Comma-separated topics/themes")
     parser.add_argument("--out-dir", default=".", help="Output directory for report")
+    parser.add_argument(
+        "--profile",
+        choices=sorted(PROFILE_PRESETS.keys()),
+        default="time_saver",
+        help="Preset tuning profile. 'time_saver' is strict and optimized to reduce review time.",
+    )
     parser.add_argument("--query-depth", type=int, default=72, help="Long-tail query count per theme")
     parser.add_argument("--target-total-links", type=int, default=120, help="Total curated links budget per theme")
     parser.add_argument("--min-links-per-theme", type=int, default=12, help="Minimum links threshold for GOOD status")
+    parser.add_argument("--min-item-score", type=int, default=10, help="Minimum per-link relevance score to keep")
     parser.add_argument(
         "--strict-diversity",
         action=argparse.BooleanOptionalAction,
@@ -671,6 +718,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parse_args(argv)
     themes = parse_themes(args.themes)
     out_dir = Path(args.out_dir)
+    preset = PROFILE_PRESETS.get(args.profile, PROFILE_PRESETS["balanced"])
+
+    query_depth = max(12, args.query_depth, preset["query_depth"])
+    target_total_links = max(20, args.target_total_links, preset["target_total_links"])
+    min_links_per_theme = max(1, args.min_links_per_theme, preset["min_links_per_theme"])
+    min_item_score = max(1, args.min_item_score, preset["min_item_score"])
+    strict_diversity = bool(args.strict_diversity) and bool(preset["strict_diversity"])
 
     try:
         results: Dict[str, List[Item]] = {}
@@ -679,9 +733,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         for theme in themes:
             curated, source_notes = mine_theme(
                 theme=theme,
-                query_depth=max(12, args.query_depth),
-                target_total_links=max(20, args.target_total_links),
-                strict_diversity=bool(args.strict_diversity),
+                query_depth=query_depth,
+                target_total_links=target_total_links,
+                strict_diversity=strict_diversity,
+                min_item_score=min_item_score,
             )
 
             # Adaptive hardening pass:
@@ -690,9 +745,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             if not is_theme_good(curated, max(1, args.min_links_per_theme)):
                 recovery_curated, recovery_notes = mine_theme(
                     theme=theme,
-                    query_depth=min(96, max(18, args.query_depth + 16)),
-                    target_total_links=max(30, int(args.target_total_links * 1.35)),
+                    query_depth=min(96, max(18, query_depth + 16)),
+                    target_total_links=max(30, int(target_total_links * 1.35)),
                     strict_diversity=False,
+                    min_item_score=max(6, min_item_score - 3),
                 )
                 if len(recovery_curated) > len(curated):
                     curated = recovery_curated
@@ -710,7 +766,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             results=results,
             source_notes_by_theme=source_notes_by_theme,
             out_dir=out_dir,
-            min_links_per_theme=max(1, args.min_links_per_theme),
+            min_links_per_theme=min_links_per_theme,
         )
         print(f"Saved {report}")
         return 0
