@@ -639,6 +639,65 @@ def is_theme_good(items: List[Item], min_links_per_theme: int) -> bool:
     return len(items) >= min_links_per_theme and len(sources) >= 2
 
 
+def emergency_discovery_items(theme: str) -> List[Item]:
+    """Fail-safe: always provide actionable discovery links if retrieval returns zero."""
+    q = quote_plus(theme)
+    items = [
+        Item(
+            source="youtube",
+            title=f"YouTube discovery: {theme}",
+            url=f"https://www.youtube.com/results?search_query={q}",
+            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
+            query=theme,
+            intent="Implementation",
+            score=1,
+        ),
+        Item(
+            source="medium",
+            title=f"Medium discovery: {theme}",
+            url=f"https://medium.com/search?q={q}",
+            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
+            query=theme,
+            intent="Implementation",
+            score=1,
+        ),
+        Item(
+            source="blogs",
+            title=f"Google blog discovery: {theme}",
+            url=(
+                "https://www.google.com/search?q="
+                + quote_plus(
+                    f"(site:embeddedartistry.com OR site:interrupt.memfault.com OR "
+                    f"site:embeddedrelated.com OR site:hackaday.com OR site:embedded.com) {theme}"
+                )
+            ),
+            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
+            query=theme,
+            intent="Tooling",
+            score=1,
+        ),
+        Item(
+            source="reddit",
+            title=f"Reddit discovery: {theme}",
+            url=f"https://www.reddit.com/search/?q={q}",
+            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
+            query=theme,
+            intent="Interview",
+            score=1,
+        ),
+        Item(
+            source="quora",
+            title=f"Quora discovery: {theme}",
+            url=f"https://www.quora.com/search?q={q}",
+            snippet="Emergency fallback discovery link due to zero retrieved candidates.",
+            query=theme,
+            intent="Career/Market",
+            score=1,
+        ),
+    ]
+    return items
+
+
 def write_single_report(
     themes: List[str],
     results: Dict[str, List[Item]],
@@ -767,6 +826,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                         "Adaptive recovery pass enabled: expanded query depth and "
                         "relaxed diversity constraints for better coverage."
                     )
+
+            if not curated:
+                curated = emergency_discovery_items(theme)
+                source_notes["emergency"] = (
+                    "Emergency discovery mode activated because retrieval returned zero items. "
+                    "Theme-specific discovery links were written to avoid empty report output."
+                )
 
             results[theme] = curated
             source_notes_by_theme[theme] = source_notes
