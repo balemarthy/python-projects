@@ -55,7 +55,7 @@ PROFILE_PRESETS = {
         "target_total_links": 90,
         "min_links_per_theme": 12,
         "strict_diversity": True,
-        "min_item_score": 14,
+        "min_item_score": 8,
     },
     "balanced": {
         "query_depth": 72,
@@ -532,8 +532,18 @@ def curate_items(
     # Global ranking list.
     all_candidates: List[Item] = []
     for src, items in candidates_by_source.items():
-        source_deduped = dedupe_items(sorted(items, key=lambda i: i.score, reverse=True), max_items=300)
-        source_deduped = [i for i in source_deduped if i.score >= min_item_score]
+        source_deduped_raw = dedupe_items(sorted(items, key=lambda i: i.score, reverse=True), max_items=300)
+        source_deduped = [i for i in source_deduped_raw if i.score >= min_item_score]
+
+        # Fail-open for core sources: if strict score threshold empties a core source,
+        # retain a small best-effort lane so report remains usable.
+        if src in CORE_SOURCES and not source_deduped and source_deduped_raw:
+            source_deduped = source_deduped_raw[:8]
+            source_notes[src] = (
+                "Low-signal recovery applied for core source: kept best available items "
+                "below strict score threshold."
+            )
+
         candidates_by_source[src] = source_deduped
         all_candidates.extend(source_deduped)
 
@@ -748,7 +758,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     query_depth=min(96, max(18, query_depth + 16)),
                     target_total_links=max(30, int(target_total_links * 1.35)),
                     strict_diversity=False,
-                    min_item_score=max(6, min_item_score - 3),
+                    min_item_score=max(4, min_item_score - 4),
                 )
                 if len(recovery_curated) > len(curated):
                     curated = recovery_curated
