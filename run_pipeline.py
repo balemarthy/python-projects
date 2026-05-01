@@ -238,6 +238,16 @@ def normalize_url(url: str) -> str:
     return urlunparse((scheme, netloc, path, "", query, ""))
 
 
+def host_key(url: str) -> str:
+    try:
+        netloc = urlparse(url).netloc.lower()
+    except Exception:
+        return ""
+    if netloc.startswith("www."):
+        netloc = netloc[4:]
+    return netloc
+
+
 def title_signature(title: str) -> str:
     normalized = re.sub(r"\W+", " ", title.lower())
     tokens = [t for t in normalized.split() if len(t) > 2]
@@ -572,6 +582,7 @@ def curate_items(
     used_cluster: Set[str] = set()
     source_count: Dict[str, int] = {s: 0 for s in ALL_SOURCES}
     intent_count: Dict[str, int] = {i: 0 for i in INTENT_BUCKETS}
+    host_count: Dict[str, int] = {}
 
     # Global ranking list.
     all_candidates: List[Item] = []
@@ -592,12 +603,14 @@ def curate_items(
         all_candidates.extend(source_deduped)
 
     all_candidates.sort(key=lambda i: i.score, reverse=True)
+    per_host_cap = 2 if strict_diversity else 3
 
     for item in all_candidates:
         if len(selected) >= target_total_links:
             break
 
         cluster = near_duplicate_signature(item.title)
+        host = host_key(item.url)
         if item.url in used_url or cluster in used_cluster:
             continue
 
@@ -607,10 +620,15 @@ def curate_items(
         if strict_diversity and intent_count[item.intent] >= per_intent_cap:
             continue
 
+        if host and host_count.get(host, 0) >= per_host_cap:
+            continue
+
         used_url.add(item.url)
         used_cluster.add(cluster)
         source_count[item.source] += 1
         intent_count[item.intent] += 1
+        if host:
+            host_count[host] = host_count.get(host, 0) + 1
         selected.append(item)
 
     # Make sure core sources are represented where possible.
@@ -620,17 +638,22 @@ def curate_items(
             continue
         fallback_candidates = candidates_by_source.get(src, [])
         for item in fallback_candidates:
+            host = host_key(item.url)
             if item.url in used_url:
                 continue
             if source_count[src] >= per_source_cap:
                 break
             if strict_diversity and intent_count[item.intent] >= per_intent_cap:
                 continue
+            if host and host_count.get(host, 0) >= per_host_cap:
+                continue
             selected.append(item)
             used_url.add(item.url)
             used_cluster.add(near_duplicate_signature(item.title))
             source_count[src] += 1
             intent_count[item.intent] += 1
+            if host:
+                host_count[host] = host_count.get(host, 0) + 1
             present_sources.add(src)
             break
 
@@ -695,6 +718,36 @@ def write_single_report(
     file_path = out_dir / f"latest_news_{date_str}.md"
 
     lines: List[str] = [f"# Research Report - {date_str}", ""]
+
+    all_items: List[Tuple[str, Item]] = []
+    for theme in themes:
+        for item in results.get(theme, []):
+            all_items.append((theme, item))
+
+    top_picks: List[Tuple[str, Item]] = []
+    seen_top_urls: Set[str] = set()
+    seen_top_hosts: Dict[str, int] = {}
+    for theme, item in sorted(all_items, key=lambda pair: pair[1].score, reverse=True):
+        host = host_key(item.url)
+        if item.url in seen_top_urls:
+            continue
+        if host and seen_top_hosts.get(host, 0) >= 2:
+            continue
+        seen_top_urls.add(item.url)
+        if host:
+            seen_top_hosts[host] = seen_top_hosts.get(host, 0) + 1
+        top_picks.append((theme, item))
+        if len(top_picks) >= 10:
+            break
+
+    lines.append("## Top 10 To Read First")
+    lines.append("")
+    if not top_picks:
+        lines.append("- No high-confidence picks in this run.")
+    else:
+        for theme, item in top_picks:
+            lines.append(f"- [{item.title}]({item.url}) ({item.source}, {theme}, {item.intent})")
+    lines.append("")
 
     for theme in themes:
         items = results.get(theme, [])

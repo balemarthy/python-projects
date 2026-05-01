@@ -44,6 +44,9 @@ class TestRunPipeline(unittest.TestCase):
         # Need at least 3 items and avg >= 8 by policy.
         self.assertFalse(rp.source_quality_pass(low_quora))
 
+    def test_host_key_normalizes_www(self):
+        self.assertEqual(rp.host_key("https://www.example.com/a"), "example.com")
+
 
 if __name__ == "__main__":
     unittest.main()
