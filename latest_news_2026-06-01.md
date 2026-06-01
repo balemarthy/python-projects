@@ -1,0 +1,132 @@
+# Research Report - 2026-06-01
+
+## Top 10 To Read First
+
+- [Continuous observability for debugging RTOS-based firmware - embedded.com](https://news.google.com/rss/articles/CBMijAFBVV95cUxPd2tYNDl0MjQ2cXNlSGxiZDg4b3F6NHBnSHJ2QVZ5MXVPb2FxOGJZQzBXMi1HeGw1b2NGcjRMQjRhT0dyS3EzaGo3bGNIeVRucEtoR1pvOGx6OU1jU0ZJQ2hxODc2NENMR19VNW9UaUtyRV9JSDdTbFZWaWdkTm5BaUFDbEdNeHp2b1FwTQ?oc=5) (blogs, rtos, Debugging)
+- [Round-robin or RTOS for my embedded system - EmbeddedRelated.com](https://news.google.com/rss/articles/CBMiYkFVX3lxTFBCM0RXcVowVGc3ZlJUV2FxeXJ3VURCQzFOQ3A4TnNWb2JBMjFTRnNFNmRFeU96eVZBWXBab3dXdkphM0FWR1lBdUVLWmNTTkZVRXgzY1VySllvMGNTUUZjSl9R?oc=5) (blogs, rtos, Implementation)
+- [Petros CH32H417M Alef – A Raspberry Pi Pico-sized RISC-V USB 3.0 camera board](https://www.cnx-software.com/2026/05/29/petros-ch32h417m-alef-a-raspberry-pi-pico-sized-risc-v-usb-3-0-camera-board) (blogs, embedded systems, Debugging)
+- [ODROID-H5 Review – Part 2: A dual 10GbE mini PC tested with Ubuntu 26.04](https://www.cnx-software.com/2026/05/31/odroid-h5-review-a-dual-10gbe-mini-pc-tested-with-ubuntu-26-04) (blogs, embedded systems, Implementation)
+- [Zonal Architectures for SDVs, Variscite's new VAR-SMARC SoM, Connector Survey: Embedded Week Insights](https://www.embedded.com/zonal-architectures-for-sdvs-variscites-new-var-smarc-som-connector-survey-embedded-week-insights) (blogs, embedded systems, Tooling)
+- [Convenience Gone Wrong: A C++ auto Story](https://embeddedartistry.com/blog/2026/02/20/convenience-gone-wrong-a-c-auto-story) (blogs, embedded systems, Implementation)
+- [Smart Door Lock System using STM32F446RE and FreeRTOS](https://medium.com/@ggauravv123098/smart-door-lock-system-using-stm32f446re-and-freertos-41bd017ffaf9?source=rss------rtos-5) (medium, rtos, Implementation)
+- [I2C Communication Protocol — A Complete Guide for Embedded Systems Developers](https://medium.com/@hunkcool1991/i2c-communication-protocol-a-complete-guide-for-embedded-systems-developers-0f4c1a1f53d9?source=rss------embedded_systems-5) (medium, embedded systems, Tooling)
+- [Reshaping Embedded Software for Edge AI to Physical AI, Fail-Safe Engineering, PQC Chips: Embedded Week Insights](https://www.embedded.com/reshaping-embedded-software-for-edge-ai-to-physical-ai-fail-safe-engineering-pqc-chips-embedded-week-insights) (blogs, embedded systems, Implementation)
+- [Monorepo Tooling Update: Signed Commit Support in Git 2.52](https://embeddedartistry.com/blog/2026/01/29/monorepo-tooling-update-signed-commit-support-in-git-2-52) (blogs, embedded systems, Projects)
+
+## embedded systems
+
+Coverage: **GOOD** (16 links across 2 sources)
+
+### Debugging
+
+- [Petros CH32H417M Alef – A Raspberry Pi Pico-sized RISC-V USB 3.0 camera board](https://www.cnx-software.com/2026/05/29/petros-ch32h417m-alef-a-raspberry-pi-pico-sized-risc-v-usb-3-0-camera-board) (blogs) - XPU Labs’ Petros CH32H417M Alef is a Raspberry Pi Pico-sized board based on the WCH CH32H417M RISC-V USB 3.0 microcontroller and taking a 2MP OV2640 camera module through the MCU’s
+- [Detecting a Sailing Shopping Cart on a Highway: CV Systems vs. Absurd Reality](https://zubinbhuyan.medium.com/detecting-a-sailing-shopping-cart-on-a-highway-cv-systems-vs-absurd-reality-395eafa098fb?source=rss------technology-5) (medium) - Continue reading on Medium »
+
+### Implementation
+
+- [Interrupts in Embedded Systems: Architecture, Latency, and Real-Time Design Principles - arunatechsustainability.medium.com](https://news.google.com/rss/articles/CBMi1gFBVV95cUxOZUxEclNNaGpBTExfZXlqR21Wei1pcC1rY1VBSkNRWGhZZlBUNi1udk8zd0xqV09NMGViYjVTSnhsT0ZaM3M0NDQ0eThTbUtSTGpHcVNrMTJyZkxhaEQyeXUxUkpvX1JWMlh4RzZrQTNVUHMwWWp6WEo2bTlPWURYdTl2NU5LZzhwa0c0Vzg4QnVSNTB5MzZ1YmxWUHphVFRybmxGcHNFWjRqeFRpSFR5d1JiTU9TOEc5TlZjX0gwS0dDMFdkSk1vNGdQQlFaWHEwSUJJOGJR?oc=5) (medium) - Interrupts in Embedded Systems: Architecture, Latency, and Real-Time Design Principles arunatechsustainability.medium.com
+- [Best Firmware Architecture Attributes - Tayyar GUZEL - EmbeddedRelated.com](https://news.google.com/rss/articles/CBMiYEFVX3lxTE82Q0xFaVZXRzlub1JIckJkb3NkNDNSUVRsQzJWY1ZnUDRTMmI3dW01cmwyUjkwZjVIaS1HMW5KZHF4cFZZX1lnREMydVlRRDJLTDlGSU9BX1Zwaks5bU5EXw?oc=5) (blogs) - Best Firmware Architecture Attributes - Tayyar GUZEL EmbeddedRelated.com
+- [The Practical ESP32 Engineer: Structured Design, Wireless Integration, and Advanced Firmware Development (The Modern Tec - EmbeddedRelated.com](https://news.google.com/rss/articles/CBMiWkFVX3lxTFBiTF90LVpUTERGck90UHFGSU51bXpicVAyVlp1SWJFeUo2TzRDNmNDa1IwM0tvalcyUVZGZTBCRnA3bmhmOV9Wekgyd0JaNW4wcGo0LXYxS2ZaZw?oc=5) (blogs) - The Practical ESP32 Engineer: Structured Design, Wireless Integration, and Advanced Firmware Development (The Modern Tec EmbeddedRelated.com
+- [ODROID-H5 Review – Part 2: A dual 10GbE mini PC tested with Ubuntu 26.04](https://www.cnx-software.com/2026/05/31/odroid-h5-review-a-dual-10gbe-mini-pc-tested-with-ubuntu-26-04) (blogs) - I received a kit for review last week with an ODROID-H5 SBC, a Type1 case, an M.2 10GbE module, and other accessories. In the first part of the review, I went through an unboxing,
+- [Convenience Gone Wrong: A C++ auto Story](https://embeddedartistry.com/blog/2026/02/20/convenience-gone-wrong-a-c-auto-story) (blogs) - 20 February 2026 by Phillip JohnstonAn insidious C++ error related to my use of auto ended up driving me nuts for hours this week. I was revisiting a driver I wrote, and I noticed
+- [I Built an Offline-First RFID Attendance Machine with ESP32-C3 — Here’s How](https://medium.com/@zulfikriyahya18/i-built-an-offline-first-rfid-attendance-machine-with-esp32-c3-heres-how-28bb8efab21e?source=rss------embedded_systems-5) (medium) - When the internet goes down, most IoT systems fail. Mine doesn’t. Continue reading on Medium »
+- [Reshaping Embedded Software for Edge AI to Physical AI, Fail-Safe Engineering, PQC Chips: Embedded Week Insights](https://www.embedded.com/reshaping-embedded-software-for-edge-ai-to-physical-ai-fail-safe-engineering-pqc-chips-embedded-week-insights) (blogs) - Here's a roundup of this week's must-read articles. We look into the latest developments on reshaping embedded software when moving from edge AI to physical AI, fail-safe engineeri
+- [Fail-Safe Engineering for Autonomous Systems](https://www.embedded.com/fail-safe-engineering-for-autonomous-systems) (blogs) - Autonomous systems have migrated from the ideally deterministic conditions of research labs to the unforgiving reality of roads, factory floors, disaster scenes, and surgical suite
+
+### Tooling
+
+- [u-blox ALMA-B2 Bluetooth 6.0 and 802.15.4 module features Nordic nRF54LM20 Edge AI wireless MCU](https://www.cnx-software.com/2026/05/29/u-blox-alma-b2-bluetooth-6-0-and-802-15-4-module-features-nordic-nrf54lm20-edge-ai-wireless-mcu) (blogs) - u-blox has recently announced the ALMA-B2 standalone BLE 6.0 and 802.15.4 module family built around the Nordic Semi nRF54LM20 Cortex-M33 wireless microcontroller with a dedicated
+- [Zonal Architectures for SDVs, Variscite's new VAR-SMARC SoM, Connector Survey: Embedded Week Insights](https://www.embedded.com/zonal-architectures-for-sdvs-variscites-new-var-smarc-som-connector-survey-embedded-week-insights) (blogs) - Here's a roundup of this week's must-read articles. We look into the latest developments on zonal architectures for SDVs, Variscite's new VAR-SMARC system-on-module, and key findin
+- [I2C Communication Protocol — A Complete Guide for Embedded Systems Developers](https://medium.com/@hunkcool1991/i2c-communication-protocol-a-complete-guide-for-embedded-systems-developers-0f4c1a1f53d9?source=rss------embedded_systems-5) (medium) - Everything you need to understand Inter-Integrated Circuit communication, from the basics to the data frame structure. Continue reading on Medium »
+- [Understanding Operating System (Page Replacement Algorithms), Part 62: Page Replacement Algorithms.](https://parashar--manas.medium.com/understanding-operating-system-page-replacement-algorithms-part-62-page-replacement-algorithms-d01a309f70f4?source=rss------technology-5) (medium) - Page Replacement Algorithms are used in paging-based memory management systems to decide which page should be removed from memory when a… Continue reading on Medium »
+
+### Interview
+
+- Insufficient quality for this intent bucket in this run.
+
+### Projects
+
+- [Monorepo Tooling Update: Signed Commit Support in Git 2.52](https://embeddedartistry.com/blog/2026/01/29/monorepo-tooling-update-signed-commit-support-in-git-2-52) (blogs) - 29 January 2026 by Phillip JohnstonBurnout has kept me away from several different projects for years, as my file timestamps frequently remind me. It’s a good reminder that bit rot
+- [Configuring Git Remotes: Fetch Only One Branch and No Tags](https://embeddedartistry.com/blog/2026/01/26/configuring-git-remotes-fetch-only-one-branch-and-no-tags) (blogs) - 26 January 2026 by Phillip JohnstonBurnout has kept me away from several different projects for years. I’ve forgotten completely about some problems, the tools have changed underne
+
+### Career/Market
+
+- Insufficient quality for this intent bucket in this run.
+
+### Source Notes
+
+- youtube: Insufficient quality or unavailable in this run (core source).
+- reddit: Insufficient quality; excluded from curated output.
+- recovery: Adaptive recovery pass enabled: expanded query depth and relaxed diversity constraints for better coverage.
+
+## firmware jobs
+
+Coverage: **INSUFFICIENT** (4 links across 1 sources)
+
+### Debugging
+
+- [Debugging Firmware with GDB - Memfault](https://news.google.com/rss/articles/CBMiZEFVX3lxTE41RDlvelFJMWJDU0JjdGdyN08wZG9PM09XOG1zUVZSSG9GT0pJekV0Z29PR1l4TmpxaV9RanNVZm9sZUpHVHRvVmNuRnFfZGxHaW0ya0Jna1NPWThPaTROM1V3TWo?oc=5) (blogs) - Debugging Firmware with GDB Memfault
+- [Nash’s Four Favorite Firmware Debug Tools - Memfault](https://news.google.com/rss/articles/CBMiekFVX3lxTE8zX3NPSHhhZVJZaFdxdmlDUUZxUkZleDNwYzZqS3RWY1pTd0xiWU5YeDlpTzlXenJvOHkyenlNb0RzbFFqcm9WN0syV2NQN2FLWG5ZY1VTMW5HWVFHdm44RDgtWkFUeW0xS0gwbDRfNEdRbXBWbmtzRjZ3?oc=5) (blogs) - Nash’s Four Favorite Firmware Debug Tools Memfault
+- [A Schematic Review Checklist for Firmware Engineers - Memfault](https://news.google.com/rss/articles/CBMib0FVX3lxTE1qVmE5ZW41dWcxRG5TbDMyVF9XaGdVdzVPTndGRzFFdnRjd2hZRnZ2MGI0Wm12RXNiRTh2TE5kT3F3eHR0ZmpFZ2VrRTQzMl9xTldOcXBybGkxRDB5SzdUN3FNbmxnblB6M05PUjFjWQ?oc=5) (blogs) - A Schematic Review Checklist for Firmware Engineers Memfault
+- [Petros CH32H417M Alef – A Raspberry Pi Pico-sized RISC-V USB 3.0 camera board](https://www.cnx-software.com/2026/05/29/petros-ch32h417m-alef-a-raspberry-pi-pico-sized-risc-v-usb-3-0-camera-board) (blogs) - XPU Labs’ Petros CH32H417M Alef is a Raspberry Pi Pico-sized board based on the WCH CH32H417M RISC-V USB 3.0 microcontroller and taking a 2MP OV2640 camera module through the MCU’s
+
+### Implementation
+
+- Insufficient quality for this intent bucket in this run.
+
+### Tooling
+
+- Insufficient quality for this intent bucket in this run.
+
+### Interview
+
+- Insufficient quality for this intent bucket in this run.
+
+### Projects
+
+- Insufficient quality for this intent bucket in this run.
+
+### Career/Market
+
+- Insufficient quality for this intent bucket in this run.
+
+### Source Notes
+
+- youtube: Insufficient quality or unavailable in this run (core source).
+- medium: Insufficient quality or unavailable in this run (core source).
+- recovery: Adaptive recovery pass enabled: expanded query depth and relaxed diversity constraints for better coverage.
+
+## rtos
+
+Coverage: **INSUFFICIENT** (4 links across 2 sources)
+
+### Debugging
+
+- [Continuous observability for debugging RTOS-based firmware - embedded.com](https://news.google.com/rss/articles/CBMijAFBVV95cUxPd2tYNDl0MjQ2cXNlSGxiZDg4b3F6NHBnSHJ2QVZ5MXVPb2FxOGJZQzBXMi1HeGw1b2NGcjRMQjRhT0dyS3EzaGo3bGNIeVRucEtoR1pvOGx6OU1jU0ZJQ2hxODc2NENMR19VNW9UaUtyRV9JSDdTbFZWaWdkTm5BaUFDbEdNeHp2b1FwTQ?oc=5) (blogs) - Continuous observability for debugging RTOS-based firmware embedded.com
+
+### Implementation
+
+- [Round-robin or RTOS for my embedded system - EmbeddedRelated.com](https://news.google.com/rss/articles/CBMiYkFVX3lxTFBCM0RXcVowVGc3ZlJUV2FxeXJ3VURCQzFOQ3A4TnNWb2JBMjFTRnNFNmRFeU96eVZBWXBab3dXdkphM0FWR1lBdUVLWmNTTkZVRXgzY1VySllvMGNTUUZjSl9R?oc=5) (blogs) - Round-robin or RTOS for my embedded system EmbeddedRelated.com
+- [RTOS dissatisfaction - embedded.com](https://news.google.com/rss/articles/CBMiWkFVX3lxTE9IbDVNc1VIODI4aVo2Q1ZXZW05cXBQUUdodEgxTExRSXFwZVUxbVJtbThvN044UWVLSXAtZDI3YXVhaFdvT0V3cGJnQTVBRXphV3VOYWZfWTZjQQ?oc=5) (blogs) - RTOS dissatisfaction embedded.com
+- [Smart Door Lock System using STM32F446RE and FreeRTOS](https://medium.com/@ggauravv123098/smart-door-lock-system-using-stm32f446re-and-freertos-41bd017ffaf9?source=rss------rtos-5) (medium) - 1. Introduction Continue reading on Medium »
+
+### Tooling
+
+- Insufficient quality for this intent bucket in this run.
+
+### Interview
+
+- Insufficient quality for this intent bucket in this run.
+
+### Projects
+
+- Insufficient quality for this intent bucket in this run.
+
+### Career/Market
+
+- Insufficient quality for this intent bucket in this run.
+
+### Source Notes
+
+- youtube: Insufficient quality or unavailable in this run (core source).
+- recovery: Adaptive recovery pass enabled: expanded query depth and relaxed diversity constraints for better coverage.
